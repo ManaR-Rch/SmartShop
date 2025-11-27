@@ -37,20 +37,20 @@ public class OrderItem {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    private Product produit;
 
     @NotNull
     @PositiveOrZero
     @Column(nullable = false)
-    private Integer quantity;
+    private Integer quantite;
 
     @NotNull
     @PositiveOrZero
-    @Column(name = "unit_price", nullable = false, precision = 19, scale = 2)
-    private BigDecimal unitPrice;
+    @Column(name = "prix_unitaire", nullable = false, precision = 19, scale = 2)
+    private BigDecimal prixUnitaire;
 
     @NotNull
     @PositiveOrZero
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal total;
+    @Column(name = "total_ligne", nullable = false, precision = 19, scale = 2)
+    private BigDecimal totalLigne;
 }
