@@ -4,35 +4,39 @@ import com.example.smartshop.dto.CreateUserDTO;
 import com.example.smartshop.dto.LogInDTO;
 import com.example.smartshop.entity.User;
 import com.example.smartshop.entity.UserRole;
+import com.example.smartshop.mapper.UserMapper;
 import com.example.smartshop.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
-    private UserRepository userRepository;
+  private UserRepository userRepository;
+  private UserMapper userMapper;
 
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+  public UserService(UserRepository userRepository, UserMapper userMapper) {
+    this.userRepository = userRepository;
+    this.userMapper = userMapper;
+  }
+
+  public User create(CreateUserDTO dto) {
+    User user = userRepository.findByUsername(dto.getUsername()).orElse(null);
+    if (user != null) {
+      throw new RuntimeException("User already exists");
     }
+    user = userMapper.toEntity(dto);
+    user.setRole(UserRole.CLIENT);
+    userRepository.save(user);
+    return user;
+  }
 
-    public User logIn(LogInDTO dto) {
-        User user = userRepository.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (!user.getPassword().equals(dto.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
-        }
-
-        return user;
+  public User logIn(LogInDTO dto) {
+    User user = userRepository.findByUsername(dto.getUsername()).orElse(null);
+    if (user == null) {
+      throw new RuntimeException("Username or password is incorrect");
     }
-
-    public User create(CreateUserDTO dto) {
-        User user = User.builder()
-                .username(dto.getUsername())
-                .password(dto.getPassword())
-                .role(UserRole.CLIENT)
-                .build();
-
-        return userRepository.save(user);
+    if (!user.getPassword().equals(dto.getPassword())) {
+      throw new RuntimeException("Username or password is incorrect");
     }
+    return user;
+  }
 }
