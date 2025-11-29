@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -27,19 +30,26 @@ public class AuthController {
     public ResponseEntity<?> logIn(@Valid @RequestBody LogInDTO dto, HttpServletRequest request) {
         User user = userService.logIn(dto);
         HttpSession session = request.getSession(true);
-
         session.setAttribute("user", user.getId());
-        return ResponseEntity.ok("Login successful");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Login successful");
+        response.put("userId", user.getId());
+        response.put("role", user.getRole());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserDTO dto, HttpServletRequest request) {
         User user = userService.create(dto);
-
         HttpSession session = request.getSession(true);
         session.setAttribute("user", user.getId());
 
-        return ResponseEntity.ok("Account created successfully");
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Account created successfully");
+        response.put("userId", user.getId());
+        response.put("role", user.getRole());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/logout")
@@ -49,6 +59,8 @@ public class AuthController {
             session.invalidate();
         }
 
-        return ResponseEntity.ok("Logged out successfully");
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Logged out successfully");
+        return ResponseEntity.ok(response);
     }
 }
