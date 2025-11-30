@@ -2,9 +2,9 @@ package com.example.smartshop.mapper;
 
 import com.example.smartshop.entity.Client;
 import com.example.smartshop.entity.User;
+import com.example.smartshop.entity.CustomerTier;
 import com.example.smartshop.dto.ClientDTO;
 import com.example.smartshop.dto.CreateClientDTO;
-import com.example.smartshop.enums.CustomerTier;
 import org.springframework.stereotype.Component;
 
 @Component
