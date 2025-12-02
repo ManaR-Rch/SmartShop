@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,10 @@ public class Order {
 
     @Column(nullable = false)
     @Builder.Default
+    private LocalDate date = LocalDate.now();
+
+    @Column(nullable = false)
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Builder.Default
@@ -54,12 +59,19 @@ public class Order {
 
     @Column(nullable = false)
     @Builder.Default
-    private Double discount = 0.0;
+    private Double discountAmount = 0.0;
 
     @Column(nullable = false)
     @Builder.Default
-    private Double vat = 0.0;
+    private Double tax = 20.0;
 
     @Column(nullable = false)
     private Double total;
+
+    @Column(nullable = true)
+    private String promoCode;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Double remainingAmount = 0.0;
 }
