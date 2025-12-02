@@ -4,6 +4,7 @@ import com.example.smartshop.entity.Client;
 import com.example.smartshop.entity.User;
 import com.example.smartshop.entity.CustomerTier;
 import com.example.smartshop.dto.ClientDTO;
+import com.example.smartshop.dto.ClientResponseDTO;
 import com.example.smartshop.dto.CreateClientDTO;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,21 @@ public class ClientMapper {
                 .tier(client.getTier() != null ? client.getTier().name() : "BASIC")
                 .totalOrders(client.getTotalOrders() != null ? client.getTotalOrders() : 0)
                 .totalSpent(client.getTotalSpent() != null ? client.getTotalSpent() : 0.0)
+                .build();
+    }
+
+    public ClientResponseDTO toResponseDTO(Client client) {
+        if (client == null) {
+            return null;
+        }
+
+        return ClientResponseDTO.builder()
+                .id(client.getId())
+                .name(client.getName())
+                .email(client.getEmail())
+                .tier(client.getTier())
+                .totalOrders(0)
+                .totalSpent(0.0)
                 .build();
     }
 
