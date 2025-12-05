@@ -12,40 +12,40 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
-    private UserRepository userRepository;
-    private UserMapper userMapper;
-    private PasswordUtil passwordUtil;
+  private UserRepository userRepository;
+  private UserMapper userMapper;
+  private PasswordUtil passwordUtil;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordUtil passwordUtil) {
-        this.userRepository = userRepository;
-        this.userMapper = userMapper;
-        this.passwordUtil = passwordUtil;
+  public UserService(UserRepository userRepository, UserMapper userMapper, PasswordUtil passwordUtil) {
+    this.userRepository = userRepository;
+    this.userMapper = userMapper;
+    this.passwordUtil = passwordUtil;
+  }
+
+  public User create(CreateUserDTO dto) {
+    var existingUser = userRepository.findByUsername(dto.getUsername()).orElse(null);
+    if (existingUser != null) {
+      throw new BusinessRuleViolationException("User already exists");
     }
 
-    public User create(CreateUserDTO dto) {
-        var existingUser = userRepository.findByUsername(dto.getUsername()).orElse(null);
-        if (existingUser != null) {
-            throw new BusinessRuleViolationException("User already exists");
-        }
+    User user = userMapper.toEntity(dto);
+    user.setPassword(passwordUtil.passwordHash(dto.getPassword()));
+    user.setRole(UserRole.CLIENT); // Default role
 
-        User user = userMapper.toEntity(dto);
-        user.setPassword(passwordUtil.passwordHash(dto.getPassword()));
-        user.setRole(UserRole.CLIENT); // Default role
+    userRepository.save(user);
+    return user;
+  }
 
-        userRepository.save(user);
-        return user;
+  public User logIn(LogInDTO dto) {
+    User user = userRepository.findByUsername(dto.getUsername()).orElse(null);
+    if (user == null) {
+      throw new BusinessRuleViolationException("Username or password is incorrect");
     }
 
-    public User logIn(LogInDTO dto) {
-        User user = userRepository.findByUsername(dto.getUsername()).orElse(null);
-        if (user == null) {
-            throw new BusinessRuleViolationException("Username or password is incorrect");
-        }
-
-        if (!passwordUtil.checkPassword(dto.getPassword(), user.getPassword())) {
-            throw new BusinessRuleViolationException("Username or password is incorrect");
-        }
-
-        return user;
+    if (!passwordUtil.checkPassword(dto.getPassword(), user.getPassword())) {
+      throw new BusinessRuleViolationException("Username or password is incorrect");
     }
+
+    return user;
+  }
 }

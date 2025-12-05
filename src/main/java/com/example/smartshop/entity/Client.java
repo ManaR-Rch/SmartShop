@@ -24,32 +24,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Client {
-    @Id
-    @Column(name = "user_id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @Column(name = "user_id")
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "user_id")
-    private User user;
+  @OneToOne(fetch = FetchType.LAZY)
+  @MapsId
+  @JoinColumn(name = "user_id")
+  private User user;
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+  @Column(nullable = false, unique = true)
+  private String email;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private CustomerTier tier = CustomerTier.BASIC;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  @Builder.Default
+  private CustomerTier tier = CustomerTier.BASIC;
 
-    @Column(name = "total_orders", nullable = false)
-    @Builder.Default
-    private Integer totalOrders = 0;
+  @Column(name = "total_orders", nullable = false)
+  @Builder.Default
+  private Integer totalOrders = 0;
 
-    @Column(name = "total_spent", nullable = false)
-    @Builder.Default
-    private Double totalSpent = 0.0;
+  @Column(name = "total_spent", nullable = false)
+  @Builder.Default
+  private Double totalSpent = 0.0;
 }

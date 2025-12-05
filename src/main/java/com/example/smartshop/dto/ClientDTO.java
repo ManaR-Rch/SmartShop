@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ClientDTO {
-    private Long id;
-    private String name;
-    private String email;
-    private String tier;
-    private Integer totalOrders;
-    private Double totalSpent;
+  private Long id;
+  private String name;
+  private String email;
+  private String tier;
+  private Integer totalOrders;
+  private Double totalSpent;
 }

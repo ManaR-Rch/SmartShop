@@ -13,11 +13,11 @@ import jakarta.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateClientDTO {
-    @NotNull(message = "Le nom ne peut pas être vide")
-    @Size(min = 3, max = 100, message = "Le nom doit contenir entre 3 et 100 caractères")
-    private String name;
+  @NotNull(message = "Le nom ne peut pas être vide")
+  @Size(min = 3, max = 100, message = "Le nom doit contenir entre 3 et 100 caractères")
+  private String name;
 
-    @NotNull(message = "L'email ne peut pas être vide")
-    @Email(message = "L'email doit être valide")
-    private String email;
+  @NotNull(message = "L'email ne peut pas être vide")
+  @Email(message = "L'email doit être valide")
+  private String email;
 }

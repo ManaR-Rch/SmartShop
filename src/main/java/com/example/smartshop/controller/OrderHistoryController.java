@@ -15,23 +15,23 @@ import java.util.Map;
 @RequestMapping("/api/client/orders")
 public class OrderHistoryController {
 
-    private final OrderService orderService;
+  private final OrderService orderService;
 
-    public OrderHistoryController(OrderService orderService) {
-        this.orderService = orderService;
-    }
+  public OrderHistoryController(OrderService orderService) {
+    this.orderService = orderService;
+  }
 
-    @GetMapping("/history")
-    public ResponseEntity<Map<String, Object>> getOrderHistory(HttpSession session) {
-        Long clientId = (Long) session.getAttribute("user");
+  @GetMapping("/history")
+  public ResponseEntity<Map<String, Object>> getOrderHistory(HttpSession session) {
+    Long clientId = (Long) session.getAttribute("user");
 
-        List<OrderHistoryDTO> history = orderService.getClientOrderHistory(clientId);
+    List<OrderHistoryDTO> history = orderService.getClientOrderHistory(clientId);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Historique des commandes récupéré avec succès");
-        response.put("orders", history);
-        response.put("total", history.size());
+    Map<String, Object> response = new HashMap<>();
+    response.put("message", "Historique des commandes récupéré avec succès");
+    response.put("orders", history);
+    response.put("total", history.size());
 
-        return ResponseEntity.ok(response);
-    }
+    return ResponseEntity.ok(response);
+  }
 }

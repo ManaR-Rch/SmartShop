@@ -7,12 +7,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
-    
-    public User toEntity(CreateUserDTO dto) {
-        return User.builder()
-                .username(dto.getUsername())
-                .password(dto.getPassword())
-                .role(UserRole.CLIENT)
-                .build();
-    }
+
+  public User toEntity(CreateUserDTO dto) {
+    return User.builder()
+        .username(dto.getUsername())
+        .password(dto.getPassword())
+        .role(UserRole.CLIENT)
+        .build();
+  }
 }

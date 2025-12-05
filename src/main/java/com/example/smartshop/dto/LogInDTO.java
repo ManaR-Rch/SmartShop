@@ -12,11 +12,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LogInDTO {
-    @NotNull
-    @Size(min = 3, max = 50)
-    private String username;
+  @NotNull
+  @Size(min = 3, max = 50)
+  private String username;
 
-    @NotNull
-    @Size(min = 6, max = 120)
-    private String password;
+  @NotNull
+  @Size(min = 6, max = 120)
+  private String password;
 }
