@@ -3,6 +3,7 @@ package com.example.smartshop.service;
 import com.example.smartshop.entity.Client;
 import com.example.smartshop.entity.User;
 import com.example.smartshop.entity.Order;
+import com.example.smartshop.entity.CustomerTier;
 import com.example.smartshop.dto.ClientDTO;
 import com.example.smartshop.dto.ClientResponseDTO;
 import com.example.smartshop.dto.CreateClientDTO;
@@ -11,6 +12,8 @@ import com.example.smartshop.repository.OrderRepository;
 import com.example.smartshop.mapper.ClientMapper;
 import com.example.smartshop.exception.BusinessRuleViolationException;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -61,9 +64,75 @@ public class ClientService {
     Double totalSpent = orders.stream()
         .mapToDouble(Order::getTotal)
         .sum();
-    response.setTotalSpent(totalSpent);
+    response.setTotalSpent(roundToTwoDecimals(totalSpent));
 
     return response;
+  }
+
+  /**
+   * Calcule et met à jour automatiquement le tier du client basé sur :
+   * - BASIC : Client par défaut (0 commandes)
+   * - SILVER : À partir de 3 commandes OU 1 000 DH cumulés
+   * - GOLD : À partir de 10 commandes OU 5 000 DH cumulés
+   * - PLATINUM : À partir de 20 commandes OU 15 000 DH cumulés
+   *
+   * @param client le client à mettre à jour
+   */
+  public void calculateAndUpdateTier(Client client) {
+    // Récupérer les commandes du client
+    List<Order> orders = orderRepository.findByClientId(client.getId());
+    
+    int totalOrders = orders.size();
+    Double totalSpent = orders.stream()
+        .mapToDouble(Order::getTotal)
+        .sum();
+    totalSpent = roundToTwoDecimals(totalSpent);
+
+    // Mettre à jour les statistiques
+    client.setTotalOrders(totalOrders);
+    client.setTotalSpent(totalSpent);
+
+    // Déterminer le nouveau tier
+    CustomerTier newTier = calculateTier(totalOrders, totalSpent);
+    client.setTier(newTier);
+
+    // Persister la mise à jour
+    clientRepository.save(client);
+  }
+
+  /**
+   * Détermine le tier client basé sur le nombre de commandes et le montant total dépensé.
+   *
+   * @param totalOrders nombre de commandes complétées
+   * @param totalSpent montant total dépensé en DH
+   * @return le tier client déterminé
+   */
+  private CustomerTier calculateTier(int totalOrders, Double totalSpent) {
+    // PLATINUM : À partir de 20 commandes OU 15 000 DH cumulés
+    if (totalOrders >= 20 || totalSpent >= 15000.0) {
+      return CustomerTier.PLATINUM;
+    }
+    
+    // GOLD : À partir de 10 commandes OU 5 000 DH cumulés
+    if (totalOrders >= 10 || totalSpent >= 5000.0) {
+      return CustomerTier.GOLD;
+    }
+    
+    // SILVER : À partir de 3 commandes OU 1 000 DH cumulés
+    if (totalOrders >= 3 || totalSpent >= 1000.0) {
+      return CustomerTier.SILVER;
+    }
+    
+    // Par défaut BASIC
+    return CustomerTier.BASIC;
+  }
+
+  private Double roundToTwoDecimals(Double value) {
+    if (value == null)
+      return 0.0;
+    return new BigDecimal(value)
+        .setScale(2, RoundingMode.HALF_UP)
+        .doubleValue();
   }
 
   public ClientDTO create(CreateClientDTO dto) {

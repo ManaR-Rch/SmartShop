@@ -9,6 +9,7 @@ import com.example.smartshop.mapper.OrderMapper;
 import com.example.smartshop.repository.ClientRepository;
 import com.example.smartshop.repository.OrderRepository;
 import com.example.smartshop.repository.ProductRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +21,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,10 +40,38 @@ class OrderServiceTest {
     private ProductService productService;
 
     @Mock
+    private ClientService clientService;
+
+    @Mock
     private OrderMapper orderMapper;
 
     @InjectMocks
     private OrderService orderService;
+
+    @BeforeEach
+    void setUp() {
+        // Default behavior for OrderMapper.toResponseDTO
+        lenient()
+            .when(orderMapper.toResponseDTO(any(Order.class)))
+            .thenAnswer(invocation -> {
+                Order order = invocation.getArgument(0);
+                OrderResponseDTO dto = new OrderResponseDTO();
+                dto.setId(order.getId());
+                dto.setSubtotal(order.getSubtotal());
+                dto.setDiscountAmount(order.getDiscountAmount());
+                dto.setTax(order.getTax());
+                dto.setTotal(order.getTotal());
+                // Store OrderStatus as-is, not as String
+                if (order.getStatus() != null) {
+                    // Try to use reflection to set status directly
+                    dto.setStatus(order.getStatus().name());
+                } else {
+                    dto.setStatus("PENDING");
+                }
+                dto.setPromoCode(order.getPromoCode());
+                return dto;
+            });
+    }
 
     @Test
     void createOrderBasicTierSuccess() {
@@ -323,7 +353,7 @@ class OrderServiceTest {
         OrderResponseDTO result = orderService.create(dto);
 
         assertNotNull(result);
-        assertEquals(OrderStatus.REJECTED, result.getStatus());
+        assertEquals("REJECTED", result.getStatus());
     }
 
     @Test

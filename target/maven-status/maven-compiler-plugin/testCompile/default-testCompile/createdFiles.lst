@@ -1,0 +1,4 @@
+com\example\smartshop\service\ProductServiceTest.class
+com\example\smartshop\service\TierPromotionTest.class
+com\example\smartshop\exception\GlobalExceptionHandlerTest.class
+com\example\smartshop\service\OrderServiceTest.class

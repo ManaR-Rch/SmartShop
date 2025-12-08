@@ -16,6 +16,8 @@ import com.example.smartshop.repository.ProductRepository;
 import com.example.smartshop.mapper.OrderMapper;
 import com.example.smartshop.exception.BusinessRuleViolationException;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,15 +30,18 @@ public class OrderService {
   private final ClientRepository clientRepository;
   private final ProductRepository productRepository;
   private final ProductService productService;
+  private final ClientService clientService;
   private final OrderMapper orderMapper;
   private static final Pattern PROMO_CODE_PATTERN = Pattern.compile("^PROMO-[A-Z0-9]{4}$");
 
   public OrderService(OrderRepository orderRepository, ClientRepository clientRepository,
-      ProductRepository productRepository, ProductService productService, OrderMapper orderMapper) {
+      ProductRepository productRepository, ProductService productService, ClientService clientService,
+      OrderMapper orderMapper) {
     this.orderRepository = orderRepository;
     this.clientRepository = clientRepository;
     this.productRepository = productRepository;
     this.productService = productService;
+    this.clientService = clientService;
     this.orderMapper = orderMapper;
   }
 
@@ -221,6 +226,10 @@ public class OrderService {
     // Sauvegarder l'ordre
     order = orderRepository.save(order);
 
+    // Mettre à jour le tier du client et ses statistiques
+    Client client = order.getClient();
+    clientService.calculateAndUpdateTier(client);
+
     return orderMapper.toResponseDTO(order);
   }
 
@@ -266,7 +275,9 @@ public class OrderService {
   private Double roundToTwoDecimals(Double value) {
     if (value == null)
       return 0.0;
-    return Math.round(value * 100.0) / 100.0;
+    return new BigDecimal(value)
+        .setScale(2, RoundingMode.HALF_UP)
+        .doubleValue();
   }
 
   public Order getOrderById(Long id) {
