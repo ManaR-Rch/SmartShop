@@ -1,30 +1,29 @@
 package com.example.smartshop.service;
 
-import com.example.smartshop.entity.*;
-import com.example.smartshop.dto.OrderRequestDTO;
 import com.example.smartshop.dto.OrderItemRequestDTO;
+import com.example.smartshop.dto.OrderRequestDTO;
 import com.example.smartshop.dto.OrderResponseDTO;
-import com.example.smartshop.repository.OrderRepository;
-import com.example.smartshop.repository.ClientRepository;
-import com.example.smartshop.repository.ProductRepository;
+import com.example.smartshop.entity.*;
+import com.example.smartshop.exception.BusinessRuleViolationException;
 import com.example.smartshop.mapper.OrderMapper;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.smartshop.repository.ClientRepository;
+import com.example.smartshop.repository.OrderRepository;
+import com.example.smartshop.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderServiceTest {
+class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
@@ -36,277 +35,394 @@ public class OrderServiceTest {
     private ProductRepository productRepository;
 
     @Mock
+    private ProductService productService;
+
+    @Mock
     private OrderMapper orderMapper;
 
     @InjectMocks
     private OrderService orderService;
 
-    private Client platinumClient;
-    private Client goldClient;
-    private Client silverClient;
-    private Product product1;
-    private Product product2;
-
-    @BeforeEach
-    void setUp() {
-        // Créer les clients avec différents tiers
-        platinumClient = Client.builder()
-                .id(1L)
-                .name("Platinum Client")
-                .email("platinum@test.com")
-                .tier(CustomerTier.PLATINUM)
-                .totalOrders(0)
-                .totalSpent(0.0)
-                .build();
-
-        goldClient = Client.builder()
-                .id(2L)
-                .name("Gold Client")
-                .email("gold@test.com")
-                .tier(CustomerTier.GOLD)
-                .totalOrders(0)
-                .totalSpent(0.0)
-                .build();
-
-        silverClient = Client.builder()
-                .id(3L)
-                .name("Silver Client")
-                .email("silver@test.com")
-                .tier(CustomerTier.SILVER)
-                .totalOrders(0)
-                .totalSpent(0.0)
-                .build();
-
-        // Créer les produits
-        product1 = Product.builder()
-                .id(1L)
-                .name("Product 1")
-                .price(500.0)
-                .stock(10)
-                .build();
-
-        product2 = Product.builder()
-                .id(2L)
-                .name("Product 2")
-                .price(300.0)
-                .stock(10)
-                .build();
-    }
-
     @Test
-    void testPlatinumDiscountWith1500Subtotal() {
-        // PLATINUM → 15% si subTotal >= 1200
-        OrderRequestDTO dto = OrderRequestDTO.builder()
-                .clientId(1L)
-                .items(Arrays.asList(
-                        OrderItemRequestDTO.builder()
-                                .productId(1L)
-                                .quantity(3)
-                                .unitPrice(500.0)
-                                .build()
-                ))
-                .build();
+    void createOrderBasicTierSuccess() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setName("John Doe");
+        client.setTier(CustomerTier.BASIC);
 
-        Order mockOrder = Order.builder()
-                .id(1L)
-                .client(platinumClient)
-                .status(OrderStatus.PENDING)
-                .build();
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("Laptop");
+        product.setPrice(100.0);
+        product.setStock(10);
 
-        Order savedOrder = Order.builder()
-                .id(1L)
-                .client(platinumClient)
-                .status(OrderStatus.PENDING)
-                .subtotal(1500.0)
-                .discountAmount(225.0)
-                .tax(20.0)
-                .total(1530.0)
-                .remainingAmount(1530.0)
-                .build();
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+        itemDTO.setUnitPrice(100.0);
 
-        when(clientRepository.findById(1L)).thenReturn(Optional.of(platinumClient));
-        when(productRepository.findAllById(any())).thenReturn(Arrays.asList(product1));
-        when(orderRepository.save(any())).thenReturn(savedOrder);
-        when(orderMapper.toResponseDTO(savedOrder)).thenReturn(OrderResponseDTO.builder()
-                .id(1L)
-                .subtotal(1500.0)
-                .discountAmount(225.0)
-                .total(1530.0)
-                .build());
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(itemDTO));
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setClient(client);
+        order.setStatus(OrderStatus.PENDING);
+        order.setSubtotal(200.0);
+        order.setDiscountAmount(0.0);
+        order.setTax(20.0);
+        order.setTotal(240.0);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderMapper.toEntity(any(OrderRequestDTO.class), any(Client.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
 
         OrderResponseDTO result = orderService.create(dto);
 
         assertNotNull(result);
-        assertEquals(225.0, result.getDiscountAmount());
-        assertEquals(1530.0, result.getTotal());
-    }
-
-    @Test
-    void testGoldDiscountWith1000Subtotal() {
-        // GOLD → 10% si subTotal >= 800
-        OrderRequestDTO dto = OrderRequestDTO.builder()
-                .clientId(2L)
-                .items(Arrays.asList(
-                        OrderItemRequestDTO.builder()
-                                .productId(1L)
-                                .quantity(2)
-                                .unitPrice(500.0)
-                                .build()
-                ))
-                .build();
-
-        Order savedOrder = Order.builder()
-                .id(2L)
-                .client(goldClient)
-                .status(OrderStatus.PENDING)
-                .subtotal(1000.0)
-                .discountAmount(100.0)
-                .tax(20.0)
-                .total(1080.0)
-                .remainingAmount(1080.0)
-                .build();
-
-        when(clientRepository.findById(2L)).thenReturn(Optional.of(goldClient));
-        when(productRepository.findAllById(any())).thenReturn(Arrays.asList(product1));
-        when(orderRepository.save(any())).thenReturn(savedOrder);
-        when(orderMapper.toResponseDTO(savedOrder)).thenReturn(OrderResponseDTO.builder()
-                .id(2L)
-                .subtotal(1000.0)
-                .discountAmount(100.0)
-                .total(1080.0)
-                .build());
-
-        OrderResponseDTO result = orderService.create(dto);
-
-        assertNotNull(result);
-        assertEquals(100.0, result.getDiscountAmount());
-        assertEquals(1080.0, result.getTotal());
-    }
-
-    @Test
-    void testSilverDiscountWith600Subtotal() {
-        // SILVER → 5% si subTotal >= 500
-        OrderRequestDTO dto = OrderRequestDTO.builder()
-                .clientId(3L)
-                .items(Arrays.asList(
-                        OrderItemRequestDTO.builder()
-                                .productId(1L)
-                                .quantity(1)
-                                .unitPrice(600.0)
-                                .build()
-                ))
-                .build();
-
-        Order savedOrder = Order.builder()
-                .id(3L)
-                .client(silverClient)
-                .status(OrderStatus.PENDING)
-                .subtotal(600.0)
-                .discountAmount(30.0)
-                .tax(20.0)
-                .total(684.0)
-                .remainingAmount(684.0)
-                .build();
-
-        when(clientRepository.findById(3L)).thenReturn(Optional.of(silverClient));
-        when(productRepository.findAllById(any())).thenReturn(Arrays.asList(product1));
-        when(orderRepository.save(any())).thenReturn(savedOrder);
-        when(orderMapper.toResponseDTO(savedOrder)).thenReturn(OrderResponseDTO.builder()
-                .id(3L)
-                .subtotal(600.0)
-                .discountAmount(30.0)
-                .total(684.0)
-                .build());
-
-        OrderResponseDTO result = orderService.create(dto);
-
-        assertNotNull(result);
-        assertEquals(30.0, result.getDiscountAmount());
-        assertEquals(684.0, result.getTotal());
-    }
-
-    @Test
-    void testPromoCodeAddsDiscount() {
-        // Code promo → +5% cumulable
-        OrderRequestDTO dto = OrderRequestDTO.builder()
-                .clientId(2L)
-                .items(Arrays.asList(
-                        OrderItemRequestDTO.builder()
-                                .productId(1L)
-                                .quantity(2)
-                                .unitPrice(500.0)
-                                .build()
-                ))
-                .promoCode("PROMO-ABC5")
-                .build();
-
-        Order savedOrder = Order.builder()
-                .id(4L)
-                .client(goldClient)
-                .status(OrderStatus.PENDING)
-                .subtotal(1000.0)
-                .discountAmount(150.0)  // 10% GOLD + 5% PROMO = 15%
-                .tax(20.0)
-                .total(1020.0)  // (1000 - 150) * 1.2
-                .remainingAmount(1020.0)
-                .build();
-
-        when(clientRepository.findById(2L)).thenReturn(Optional.of(goldClient));
-        when(productRepository.findAllById(any())).thenReturn(Arrays.asList(product1));
-        when(orderRepository.save(any())).thenReturn(savedOrder);
-        when(orderMapper.toResponseDTO(savedOrder)).thenReturn(OrderResponseDTO.builder()
-                .id(4L)
-                .subtotal(1000.0)
-                .discountAmount(150.0)
-                .total(1020.0)
-                .build());
-
-        OrderResponseDTO result = orderService.create(dto);
-
-        assertNotNull(result);
-        assertEquals(150.0, result.getDiscountAmount());
-        assertEquals(1020.0, result.getTotal());
-    }
-
-    @Test
-    void testSilverNoDiscountBelowThreshold() {
-        // SILVER avec subTotal < 500 → 0%
-        OrderRequestDTO dto = OrderRequestDTO.builder()
-                .clientId(3L)
-                .items(Arrays.asList(
-                        OrderItemRequestDTO.builder()
-                                .productId(2L)
-                                .quantity(1)
-                                .unitPrice(300.0)
-                                .build()
-                ))
-                .build();
-
-        Order savedOrder = Order.builder()
-                .id(5L)
-                .client(silverClient)
-                .status(OrderStatus.PENDING)
-                .subtotal(300.0)
-                .discountAmount(0.0)  // Pas de remise (300 < 500)
-                .tax(20.0)
-                .total(360.0)  // 300 * 1.2
-                .remainingAmount(360.0)
-                .build();
-
-        when(clientRepository.findById(3L)).thenReturn(Optional.of(silverClient));
-        when(productRepository.findAllById(any())).thenReturn(Arrays.asList(product2));
-        when(orderRepository.save(any())).thenReturn(savedOrder);
-        when(orderMapper.toResponseDTO(savedOrder)).thenReturn(OrderResponseDTO.builder()
-                .id(5L)
-                .subtotal(300.0)
-                .discountAmount(0.0)
-                .total(360.0)
-                .build());
-
-        OrderResponseDTO result = orderService.create(dto);
-
-        assertNotNull(result);
+        assertEquals(200.0, result.getSubtotal());
         assertEquals(0.0, result.getDiscountAmount());
-        assertEquals(360.0, result.getTotal());
+    }
+
+    @Test
+    void createOrderSilverTierApplyDiscount() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setName("John Doe");
+        client.setTier(CustomerTier.SILVER);
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("Laptop");
+        product.setPrice(250.0);
+        product.setStock(10);
+
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+        itemDTO.setUnitPrice(250.0);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(itemDTO));
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setClient(client);
+        order.setStatus(OrderStatus.PENDING);
+        order.setSubtotal(500.0);
+        order.setDiscountAmount(25.0);
+        order.setTax(20.0);
+        order.setTotal(600.0);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderMapper.toEntity(any(OrderRequestDTO.class), any(Client.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+        OrderResponseDTO result = orderService.create(dto);
+
+        assertNotNull(result);
+        assertEquals(500.0, result.getSubtotal());
+        assertEquals(25.0, result.getDiscountAmount());
+    }
+
+    @Test
+    void createOrderGoldTierApplyDiscount() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setName("John Doe");
+        client.setTier(CustomerTier.GOLD);
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("Laptop");
+        product.setPrice(400.0);
+        product.setStock(10);
+
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+        itemDTO.setUnitPrice(400.0);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(itemDTO));
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setClient(client);
+        order.setStatus(OrderStatus.PENDING);
+        order.setSubtotal(800.0);
+        order.setDiscountAmount(80.0);
+        order.setTax(20.0);
+        order.setTotal(864.0);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderMapper.toEntity(any(OrderRequestDTO.class), any(Client.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+        OrderResponseDTO result = orderService.create(dto);
+
+        assertNotNull(result);
+        assertEquals(800.0, result.getSubtotal());
+        assertEquals(80.0, result.getDiscountAmount());
+    }
+
+    @Test
+    void createOrderPlatinumTierApplyDiscount() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setName("John Doe");
+        client.setTier(CustomerTier.PLATINUM);
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("Laptop");
+        product.setPrice(600.0);
+        product.setStock(10);
+
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+        itemDTO.setUnitPrice(600.0);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(itemDTO));
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setClient(client);
+        order.setStatus(OrderStatus.PENDING);
+        order.setSubtotal(1200.0);
+        order.setDiscountAmount(180.0);
+        order.setTax(20.0);
+        order.setTotal(1440.0);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderMapper.toEntity(any(OrderRequestDTO.class), any(Client.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+        OrderResponseDTO result = orderService.create(dto);
+
+        assertNotNull(result);
+        assertEquals(1200.0, result.getSubtotal());
+        assertEquals(180.0, result.getDiscountAmount());
+    }
+
+    @Test
+    void createOrderWithValidPromoCode() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setName("John Doe");
+        client.setTier(CustomerTier.BASIC);
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("Laptop");
+        product.setPrice(100.0);
+        product.setStock(10);
+
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+        itemDTO.setUnitPrice(100.0);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(itemDTO));
+        dto.setPromoCode("PROMO-ABC1");
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setClient(client);
+        order.setStatus(OrderStatus.PENDING);
+        order.setSubtotal(200.0);
+        order.setDiscountAmount(10.0);
+        order.setPromoCode("PROMO-ABC1");
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderMapper.toEntity(any(OrderRequestDTO.class), any(Client.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+        OrderResponseDTO result = orderService.create(dto);
+
+        assertNotNull(result);
+        assertEquals("PROMO-ABC1", result.getPromoCode());
+    }
+
+    @Test
+    void createOrderWithInvalidPromoCode() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setTier(CustomerTier.BASIC);
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setPrice(100.0);
+        product.setStock(10);
+
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+        itemDTO.setUnitPrice(100.0);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(itemDTO));
+        dto.setPromoCode("INVALID-CODE");
+
+        Order order = new Order();
+        order.setClient(client);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderMapper.toEntity(any(OrderRequestDTO.class), any(Client.class))).thenReturn(order);
+
+        assertThrows(BusinessRuleViolationException.class, () -> orderService.create(dto));
+    }
+
+    @Test
+    void createOrderInsufficientStock() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setTier(CustomerTier.BASIC);
+
+        Product product = new Product();
+        product.setId(1L);
+        product.setPrice(100.0);
+        product.setStock(1);
+
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+        itemDTO.setUnitPrice(100.0);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(itemDTO));
+
+        Order order = new Order();
+        order.setClient(client);
+        order.setStatus(OrderStatus.REJECTED);
+        order.setSubtotal(0.0);
+        order.setDiscountAmount(0.0);
+        order.setTotal(0.0);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderMapper.toEntity(any(OrderRequestDTO.class), any(Client.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+        OrderResponseDTO result = orderService.create(dto);
+
+        assertNotNull(result);
+        assertEquals(OrderStatus.REJECTED, result.getStatus());
+    }
+
+    @Test
+    void createOrderClientNotFound() {
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(99L);
+        dto.setItems(List.of(itemDTO));
+
+        when(clientRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessRuleViolationException.class, () -> orderService.create(dto));
+    }
+
+    @Test
+    void createOrderEmptyItems() {
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of());
+
+        assertThrows(BusinessRuleViolationException.class, () -> orderService.create(dto));
+    }
+
+    @Test
+    void createOrderNullItems() {
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(null);
+
+        assertThrows(BusinessRuleViolationException.class, () -> orderService.create(dto));
+    }
+
+    @Test
+    void createOrderProductNotFound() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setTier(CustomerTier.BASIC);
+
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductId(1L);
+        itemDTO.setQuantity(2);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(itemDTO));
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of());
+
+        assertThrows(BusinessRuleViolationException.class, () -> orderService.create(dto));
+    }
+
+    @Test
+    void createOrderMultipleItems() {
+        Client client = new Client();
+        client.setId(1L);
+        client.setTier(CustomerTier.BASIC);
+
+        Product product1 = new Product();
+        product1.setId(1L);
+        product1.setPrice(100.0);
+        product1.setStock(10);
+
+        Product product2 = new Product();
+        product2.setId(2L);
+        product2.setPrice(50.0);
+        product2.setStock(10);
+
+        OrderItemRequestDTO item1 = new OrderItemRequestDTO();
+        item1.setProductId(1L);
+        item1.setQuantity(2);
+        item1.setUnitPrice(100.0);
+
+        OrderItemRequestDTO item2 = new OrderItemRequestDTO();
+        item2.setProductId(2L);
+        item2.setQuantity(1);
+        item2.setUnitPrice(50.0);
+
+        OrderRequestDTO dto = new OrderRequestDTO();
+        dto.setClientId(1L);
+        dto.setItems(List.of(item1, item2));
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setClient(client);
+        order.setStatus(OrderStatus.PENDING);
+        order.setSubtotal(250.0);
+
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(productRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(product1, product2));
+        when(orderMapper.toEntity(any(OrderRequestDTO.class), any(Client.class))).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+        OrderResponseDTO result = orderService.create(dto);
+
+        assertNotNull(result);
+        assertEquals(250.0, result.getSubtotal());
     }
 }

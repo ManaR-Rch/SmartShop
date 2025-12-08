@@ -23,35 +23,35 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class PaymentRequestDTO {
 
-    @NotNull(message = "Order ID is required")
-    private Long orderId;
+  @NotNull(message = "Order ID is required")
+  private Long orderId;
 
-    @NotNull(message = "Amount is required")
-    @Positive(message = "Amount must be positive")
-    @DecimalMax(value = "20000.00", message = "Cash payments cannot exceed 20,000 DH (Article 193 CGI)")
-    private Double amount;
+  @NotNull(message = "Amount is required")
+  @Positive(message = "Amount must be positive")
+  @DecimalMax(value = "20000.00", message = "Cash payments cannot exceed 20,000 DH (Article 193 CGI)")
+  private Double amount;
 
-    @NotNull(message = "Payment method is required")
-    private PaymentMethod method;
+  @NotNull(message = "Payment method is required")
+  private PaymentMethod method;
 
-    // CASH fields
-    @JsonProperty("receipt_number")
-    private String receiptNumber;
+  // CASH fields
+  @JsonProperty("receipt_number")
+  private String receiptNumber;
 
-    // CHEQUE fields
-    @JsonProperty("check_number")
-    private String checkNumber;
+  // CHEQUE fields
+  @JsonProperty("check_number")
+  private String checkNumber;
 
-    @JsonProperty("check_bank")
-    private String checkBank;
+  @JsonProperty("check_bank")
+  private String checkBank;
 
-    @JsonProperty("check_due_date")
-    private LocalDate checkDueDate;
+  @JsonProperty("check_due_date")
+  private LocalDate checkDueDate;
 
-    // TRANSFER fields
-    @JsonProperty("transfer_reference")
-    private String transferReference;
+  // TRANSFER fields
+  @JsonProperty("transfer_reference")
+  private String transferReference;
 
-    @JsonProperty("transfer_bank")
-    private String transferBank;
+  @JsonProperty("transfer_bank")
+  private String transferBank;
 }

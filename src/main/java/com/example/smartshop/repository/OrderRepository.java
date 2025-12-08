@@ -7,7 +7,7 @@ import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    List<Order> findByClientIdOrderByCreatedAtDesc(Long clientId);
+  List<Order> findByClientIdOrderByCreatedAtDesc(Long clientId);
 
-    List<Order> findByClientId(Long clientId);
+  List<Order> findByClientId(Long clientId);
 }

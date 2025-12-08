@@ -11,54 +11,54 @@ import org.springframework.stereotype.Component;
 @Component
 public class ClientMapper {
 
-    public ClientDTO toDTO(Client client) {
-        if (client == null) {
-            return null;
-        }
-
-        return ClientDTO.builder()
-                .id(client.getId())
-                .name(client.getName())
-                .email(client.getEmail())
-                .tier(client.getTier() != null ? client.getTier().name() : "BASIC")
-                .totalOrders(client.getTotalOrders() != null ? client.getTotalOrders() : 0)
-                .totalSpent(client.getTotalSpent() != null ? client.getTotalSpent() : 0.0)
-                .build();
+  public ClientDTO toDTO(Client client) {
+    if (client == null) {
+      return null;
     }
 
-    public ClientResponseDTO toResponseDTO(Client client) {
-        if (client == null) {
-            return null;
-        }
+    return ClientDTO.builder()
+        .id(client.getId())
+        .name(client.getName())
+        .email(client.getEmail())
+        .tier(client.getTier() != null ? client.getTier().name() : "BASIC")
+        .totalOrders(client.getTotalOrders() != null ? client.getTotalOrders() : 0)
+        .totalSpent(client.getTotalSpent() != null ? client.getTotalSpent() : 0.0)
+        .build();
+  }
 
-        return ClientResponseDTO.builder()
-                .id(client.getId())
-                .name(client.getName())
-                .email(client.getEmail())
-                .tier(client.getTier())
-                .totalOrders(0)
-                .totalSpent(0.0)
-                .build();
+  public ClientResponseDTO toResponseDTO(Client client) {
+    if (client == null) {
+      return null;
     }
 
-    public Client toEntity(CreateClientDTO dto) {
-        if (dto == null) {
-            return null;
-        }
+    return ClientResponseDTO.builder()
+        .id(client.getId())
+        .name(client.getName())
+        .email(client.getEmail())
+        .tier(client.getTier())
+        .totalOrders(0)
+        .totalSpent(0.0)
+        .build();
+  }
 
-        return Client.builder()
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .tier(CustomerTier.BASIC)
-                .totalOrders(0)
-                .totalSpent(0.0)
-                .build();
+  public Client toEntity(CreateClientDTO dto) {
+    if (dto == null) {
+      return null;
     }
 
-    public Client updateEntityWithUser(Client client, User user) {
-        if (client != null && user != null) {
-            client.setUser(user);
-        }
-        return client;
+    return Client.builder()
+        .name(dto.getName())
+        .email(dto.getEmail())
+        .tier(CustomerTier.BASIC)
+        .totalOrders(0)
+        .totalSpent(0.0)
+        .build();
+  }
+
+  public Client updateEntityWithUser(Client client, User user) {
+    if (client != null && user != null) {
+      client.setUser(user);
     }
+    return client;
+  }
 }

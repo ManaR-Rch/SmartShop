@@ -23,90 +23,90 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Payment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "order_id", nullable = false)
+  private Order order;
 
-    @Column(nullable = false)
-    private Double amount;
+  @Column(nullable = false)
+  private Double amount;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private PaymentMethod method;
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private PaymentMethod method;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private PaymentStatus status = PaymentStatus.EN_ATTENTE;
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  @Builder.Default
+  private PaymentStatus status = PaymentStatus.EN_ATTENTE;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private LocalDateTime paymentDate = LocalDateTime.now();
+  @Column(nullable = false)
+  @Builder.Default
+  private LocalDateTime paymentDate = LocalDateTime.now();
 
-    /**
-     * Sequential number for invoice purposes (1, 2, 3...)
-     * Unique within the order
-     */
-    @Column(nullable = false)
-    private Integer sequenceNumber;
+  /**
+   * Sequential number for invoice purposes (1, 2, 3...)
+   * Unique within the order
+   */
+  @Column(nullable = false)
+  private Integer sequenceNumber;
 
-    // ===== CASH Payment Fields =====
-    /**
-     * Receipt number for cash payments
-     */
-    @Column(name = "receipt_number")
-    private String receiptNumber;
+  // ===== CASH Payment Fields =====
+  /**
+   * Receipt number for cash payments
+   */
+  @Column(name = "receipt_number")
+  private String receiptNumber;
 
-    // ===== CHEQUE Payment Fields =====
-    /**
-     * Check number for cheque payments
-     */
-    @Column(name = "check_number")
-    private String checkNumber;
+  // ===== CHEQUE Payment Fields =====
+  /**
+   * Check number for cheque payments
+   */
+  @Column(name = "check_number")
+  private String checkNumber;
 
-    /**
-     * Bank name for cheque payments
-     */
-    @Column(name = "check_bank")
-    private String checkBank;
+  /**
+   * Bank name for cheque payments
+   */
+  @Column(name = "check_bank")
+  private String checkBank;
 
-    /**
-     * Due date for cheque payments (can be in the future)
-     */
-    @Column(name = "check_due_date")
-    private LocalDate checkDueDate;
+  /**
+   * Due date for cheque payments (can be in the future)
+   */
+  @Column(name = "check_due_date")
+  private LocalDate checkDueDate;
 
-    // ===== TRANSFER Payment Fields =====
-    /**
-     * Transaction reference for transfer payments
-     */
-    @Column(name = "transfer_reference")
-    private String transferReference;
+  // ===== TRANSFER Payment Fields =====
+  /**
+   * Transaction reference for transfer payments
+   */
+  @Column(name = "transfer_reference")
+  private String transferReference;
 
-    /**
-     * Bank name for transfer payments
-     */
-    @Column(name = "transfer_bank")
-    private String transferBank;
+  /**
+   * Bank name for transfer payments
+   */
+  @Column(name = "transfer_bank")
+  private String transferBank;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+  @Column(nullable = false, updatable = false)
+  private LocalDateTime createdAt;
 
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+  @Column(nullable = false)
+  private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
+  @PrePersist
+  protected void onCreate() {
+    this.createdAt = LocalDateTime.now();
+    this.updatedAt = LocalDateTime.now();
+  }
 
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+  @PreUpdate
+  protected void onUpdate() {
+    this.updatedAt = LocalDateTime.now();
+  }
 }

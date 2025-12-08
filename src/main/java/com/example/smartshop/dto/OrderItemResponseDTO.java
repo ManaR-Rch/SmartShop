@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItemResponseDTO {
-    private Long id;
-    private Long productId;
-    private Integer quantity;
-    private Double unitPrice;
-    private Double lineTotal;
+  private Long id;
+  private Long productId;
+  private Integer quantity;
+  private Double unitPrice;
+  private Double lineTotal;
 }

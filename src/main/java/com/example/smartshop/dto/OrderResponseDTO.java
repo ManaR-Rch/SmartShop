@@ -12,15 +12,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderResponseDTO {
-    private Long id;
-    private Long clientId;
-    private LocalDate date;
-    private List<OrderItemResponseDTO> items;
-    private String status;
-    private Double subtotal;
-    private Double discountAmount;
-    private Double tax;
-    private Double total;
-    private String promoCode;
-    private Double remainingAmount;
+  private Long id;
+  private Long clientId;
+  private LocalDate date;
+  private List<OrderItemResponseDTO> items;
+  private String status;
+  private Double subtotal;
+  private Double discountAmount;
+  private Double tax;
+  private Double total;
+  private String promoCode;
+  private Double remainingAmount;
 }

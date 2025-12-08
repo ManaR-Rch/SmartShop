@@ -29,49 +29,49 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "client_id", nullable = false)
+  private Client client;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private LocalDate date = LocalDate.now();
+  @Column(nullable = false)
+  @Builder.Default
+  private LocalDate date = LocalDate.now();
 
-    @Column(nullable = false)
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+  @Column(nullable = false)
+  @Builder.Default
+  private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Builder.Default
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items = new ArrayList<>();
+  @Builder.Default
+  @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<OrderItem> items = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private OrderStatus status = OrderStatus.PENDING;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  @Builder.Default
+  private OrderStatus status = OrderStatus.PENDING;
 
-    @Column(nullable = false)
-    private Double subtotal;
+  @Column(nullable = false)
+  private Double subtotal;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Double discountAmount = 0.0;
+  @Column(nullable = false)
+  @Builder.Default
+  private Double discountAmount = 0.0;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Double tax = 20.0;
+  @Column(nullable = false)
+  @Builder.Default
+  private Double tax = 20.0;
 
-    @Column(nullable = false)
-    private Double total;
+  @Column(nullable = false)
+  private Double total;
 
-    @Column(nullable = true)
-    private String promoCode;
+  @Column(nullable = true)
+  private String promoCode;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Double remainingAmount = 0.0;
+  @Column(nullable = false)
+  @Builder.Default
+  private Double remainingAmount = 0.0;
 }

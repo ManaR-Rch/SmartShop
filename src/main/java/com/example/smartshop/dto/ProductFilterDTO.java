@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductFilterDTO {
-    private String name;
-    private Double minPrice;
-    private Double maxPrice;
-    private Boolean inStock;
-    private Integer page;
-    private Integer size;
+  private String name;
+  private Double minPrice;
+  private Double maxPrice;
+  private Boolean inStock;
+  private Integer page;
+  private Integer size;
 }

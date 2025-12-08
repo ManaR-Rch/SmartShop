@@ -21,48 +21,48 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PaymentResponseDTO {
 
-    private Long id;
+  private Long id;
 
-    private Long orderId;
+  private Long orderId;
 
-    private Double amount;
+  private Double amount;
 
-    private PaymentMethod method;
+  private PaymentMethod method;
 
-    private PaymentStatus status;
+  private PaymentStatus status;
 
-    private LocalDateTime paymentDate;
+  private LocalDateTime paymentDate;
 
-    @JsonProperty("sequence_number")
-    private Integer sequenceNumber;
+  @JsonProperty("sequence_number")
+  private Integer sequenceNumber;
 
-    // CASH fields
-    @JsonProperty("receipt_number")
-    private String receiptNumber;
+  // CASH fields
+  @JsonProperty("receipt_number")
+  private String receiptNumber;
 
-    // CHEQUE fields
-    @JsonProperty("check_number")
-    private String checkNumber;
+  // CHEQUE fields
+  @JsonProperty("check_number")
+  private String checkNumber;
 
-    @JsonProperty("check_bank")
-    private String checkBank;
+  @JsonProperty("check_bank")
+  private String checkBank;
 
-    @JsonProperty("check_due_date")
-    private LocalDate checkDueDate;
+  @JsonProperty("check_due_date")
+  private LocalDate checkDueDate;
 
-    // TRANSFER fields
-    @JsonProperty("transfer_reference")
-    private String transferReference;
+  // TRANSFER fields
+  @JsonProperty("transfer_reference")
+  private String transferReference;
 
-    @JsonProperty("transfer_bank")
-    private String transferBank;
+  @JsonProperty("transfer_bank")
+  private String transferBank;
 
-    @JsonProperty("remaining_amount")
-    private Double remainingAmount;
+  @JsonProperty("remaining_amount")
+  private Double remainingAmount;
 
-    @JsonProperty("created_at")
-    private LocalDateTime createdAt;
+  @JsonProperty("created_at")
+  private LocalDateTime createdAt;
 
-    @JsonProperty("updated_at")
-    private LocalDateTime updatedAt;
+  @JsonProperty("updated_at")
+  private LocalDateTime updatedAt;
 }

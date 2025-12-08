@@ -8,17 +8,17 @@ package com.example.smartshop.entity;
  * REJETÉ: payment rejected (exceeds legal limits, insufficient funds, etc.)
  */
 public enum PaymentStatus {
-    EN_ATTENTE("En attente"),
-    ENCAISSE("Encaissé"),
-    REJETÉ("Rejeté");
+  EN_ATTENTE("En attente"),
+  ENCAISSE("Encaissé"),
+  REJETÉ("Rejeté");
 
-    private final String label;
+  private final String label;
 
-    PaymentStatus(String label) {
-        this.label = label;
-    }
+  PaymentStatus(String label) {
+    this.label = label;
+  }
 
-    public String getLabel() {
-        return label;
-    }
+  public String getLabel() {
+    return label;
+  }
 }
