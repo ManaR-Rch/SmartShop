@@ -69,7 +69,7 @@ public class PaymentController {
    * @param orderId Order ID
    * @return List of payments for the order
    */
-  @GetMapping("/order/{orderId}")
+  @GetMapping("/orders/{orderId}")
   public ResponseEntity<Map<String, Object>> getOrderPayments(@PathVariable Long orderId) {
     List<PaymentResponseDTO> payments = paymentService.getPaymentsByOrderId(orderId);
     Map<String, Object> response = new HashMap<>();
@@ -86,7 +86,7 @@ public class PaymentController {
    * @param pageable Pagination info
    * @return Paginated payments
    */
-  @GetMapping("/order/{orderId}/paginated")
+  @GetMapping("/orders/{orderId}/paginated")
   public ResponseEntity<Map<String, Object>> getOrderPaymentsPaginated(
       @PathVariable Long orderId,
       Pageable pageable) {
@@ -106,7 +106,7 @@ public class PaymentController {
    * @param pageable Pagination info
    * @return Paginated payments
    */
-  @GetMapping("/status/{status}")
+  @GetMapping("/statuses/{status}")
   public ResponseEntity<Map<String, Object>> getPaymentsByStatus(
       @PathVariable PaymentStatus status,
       Pageable pageable) {
@@ -126,7 +126,7 @@ public class PaymentController {
    * @param pageable Pagination info
    * @return Paginated payments
    */
-  @GetMapping("/method/{method}")
+  @GetMapping("/methods/{method}")
   public ResponseEntity<Map<String, Object>> getPaymentsByMethod(
       @PathVariable PaymentMethod method,
       Pageable pageable) {
@@ -168,7 +168,7 @@ public class PaymentController {
    * @param orderId Order ID
    * @return true if remainingAmount ≈ 0
    */
-  @GetMapping("/order/{orderId}/is-fully-paid")
+  @GetMapping("/orders/{orderId}/is-fully-paid")
   public ResponseEntity<Map<String, Object>> isOrderFullyPaid(@PathVariable Long orderId) {
     Boolean fullyPaid = paymentService.isFullyPaid(orderId);
     Map<String, Object> response = new HashMap<>();

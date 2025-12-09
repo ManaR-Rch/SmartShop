@@ -24,31 +24,32 @@ import java.time.LocalDateTime;
 @Builder
 public class ErrorResponseDTO {
 
-    @JsonProperty("timestamp")
-    private LocalDateTime timestamp;
+  @JsonProperty("timestamp")
+  private LocalDateTime timestamp;
 
-    @JsonProperty("status")
-    private Integer status;
+  @JsonProperty("status")
+  private Integer status;
 
-    @JsonProperty("error")
-    private String error;
+  @JsonProperty("error")
+  private String error;
 
-    @JsonProperty("message")
-    private String message;
+  @JsonProperty("message")
+  private String message;
 
-    @JsonProperty("path")
-    private String path;
+  @JsonProperty("path")
+  private String path;
 
-    /**
-     * Factory method to create error response with all required fields
-     */
-    public static ErrorResponseDTO of(LocalDateTime timestamp, Integer status, String error, String message, String path) {
-        return ErrorResponseDTO.builder()
-                .timestamp(timestamp)
-                .status(status)
-                .error(error)
-                .message(message)
-                .path(path)
-                .build();
-    }
+  /**
+   * Factory method to create error response with all required fields
+   */
+  public static ErrorResponseDTO of(LocalDateTime timestamp, Integer status, String error, String message,
+      String path) {
+    return ErrorResponseDTO.builder()
+        .timestamp(timestamp)
+        .status(status)
+        .error(error)
+        .message(message)
+        .path(path)
+        .build();
+  }
 }

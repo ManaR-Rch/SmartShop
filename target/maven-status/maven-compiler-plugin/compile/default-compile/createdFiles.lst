@@ -58,6 +58,7 @@ com\example\smartshop\dto\LogInDTO$LogInDTOBuilder.class
 com\example\smartshop\entity\User$UserBuilder.class
 com\example\smartshop\entity\Client.class
 com\example\smartshop\service\ProductService.class
+com\example\smartshop\controller\PublicProductController.class
 com\example\smartshop\dto\OrderResponseDTO.class
 com\example\smartshop\controller\ProductController.class
 com\example\smartshop\dto\CreateClientDTO$CreateClientDTOBuilder.class

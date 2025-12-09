@@ -52,25 +52,25 @@ class OrderServiceTest {
     void setUp() {
         // Default behavior for OrderMapper.toResponseDTO
         lenient()
-            .when(orderMapper.toResponseDTO(any(Order.class)))
-            .thenAnswer(invocation -> {
-                Order order = invocation.getArgument(0);
-                OrderResponseDTO dto = new OrderResponseDTO();
-                dto.setId(order.getId());
-                dto.setSubtotal(order.getSubtotal());
-                dto.setDiscountAmount(order.getDiscountAmount());
-                dto.setTax(order.getTax());
-                dto.setTotal(order.getTotal());
-                // Store OrderStatus as-is, not as String
-                if (order.getStatus() != null) {
-                    // Try to use reflection to set status directly
-                    dto.setStatus(order.getStatus().name());
-                } else {
-                    dto.setStatus("PENDING");
-                }
-                dto.setPromoCode(order.getPromoCode());
-                return dto;
-            });
+                .when(orderMapper.toResponseDTO(any(Order.class)))
+                .thenAnswer(invocation -> {
+                    Order order = invocation.getArgument(0);
+                    OrderResponseDTO dto = new OrderResponseDTO();
+                    dto.setId(order.getId());
+                    dto.setSubtotal(order.getSubtotal());
+                    dto.setDiscountAmount(order.getDiscountAmount());
+                    dto.setTax(order.getTax());
+                    dto.setTotal(order.getTotal());
+                    // Store OrderStatus as-is, not as String
+                    if (order.getStatus() != null) {
+                        // Try to use reflection to set status directly
+                        dto.setStatus(order.getStatus().name());
+                    } else {
+                        dto.setStatus("PENDING");
+                    }
+                    dto.setPromoCode(order.getPromoCode());
+                    return dto;
+                });
     }
 
     @Test

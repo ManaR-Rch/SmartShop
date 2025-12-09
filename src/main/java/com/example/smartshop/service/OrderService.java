@@ -93,12 +93,15 @@ public class OrderService {
           .findFirst()
           .orElseThrow();
 
+      // Utiliser unitPrice de la requête si fourni, sinon utiliser le prix du produit
+      Double unitPrice = itemDTO.getUnitPrice() != null ? itemDTO.getUnitPrice() : product.getPrice();
+
       OrderItem item = OrderItem.builder()
           .order(order)
           .product(product)
           .quantity(itemDTO.getQuantity())
-          .unitPrice(itemDTO.getUnitPrice())
-          .lineTotal(itemDTO.getQuantity() * itemDTO.getUnitPrice())
+          .unitPrice(unitPrice)
+          .lineTotal(itemDTO.getQuantity() * unitPrice)
           .build();
       orderItems.add(item);
     }
@@ -168,6 +171,13 @@ public class OrderService {
     return orderMapper.toResponseDTO(order);
   }
 
+  public List<OrderResponseDTO> findAll() {
+    List<Order> orders = orderRepository.findAll();
+    return orders.stream()
+        .map(orderMapper::toResponseDTO)
+        .collect(Collectors.toList());
+  }
+
   public List<OrderResponseDTO> findAllByClientId(Long clientId) {
     List<Order> orders = orderRepository.findByClientIdOrderByCreatedAtDesc(clientId);
     return orders.stream()
@@ -228,20 +238,20 @@ public class OrderService {
 
     // Mettre à jour les statistiques du client
     Client client = order.getClient();
-    
+
     // Incrémenter totalOrders
     client.setTotalOrders(client.getTotalOrders() + 1);
-    
+
     // Ajouter le montant total à totalSpent (avec rounding)
     Double newTotalSpent = roundToTwoDecimals(client.getTotalSpent() + order.getTotal());
     client.setTotalSpent(newTotalSpent);
-    
+
     // Mettre à jour les dates
     if (client.getFirstOrderDate() == null) {
       client.setFirstOrderDate(order.getCreatedAt());
     }
     client.setLastOrderDate(order.getCreatedAt());
-    
+
     // Mettre à jour le tier basé sur les nouvelles statistiques
     clientService.calculateAndUpdateTier(client);
 

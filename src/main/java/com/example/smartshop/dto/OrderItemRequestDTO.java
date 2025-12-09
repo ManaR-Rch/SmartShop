@@ -17,6 +17,6 @@ public class OrderItemRequestDTO {
   @NotNull(message = "Quantity is required")
   private Integer quantity;
 
-  @NotNull(message = "Unit price is required")
+  // unitPrice is optional - if not provided, product price will be used
   private Double unitPrice;
 }

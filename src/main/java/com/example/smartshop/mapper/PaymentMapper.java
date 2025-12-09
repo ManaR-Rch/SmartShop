@@ -42,7 +42,7 @@ public class PaymentMapper {
     return Payment.builder()
         .order(order)
         .amount(dto.getAmount())
-        .method(dto.getMethod())
+        .method(dto.getPaymentMethod())
         .receiptNumber(dto.getReceiptNumber())
         .checkNumber(dto.getCheckNumber())
         .checkBank(dto.getCheckBank())

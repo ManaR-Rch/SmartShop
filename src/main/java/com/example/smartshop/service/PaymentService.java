@@ -80,7 +80,7 @@ public class PaymentService {
     validatePaymentMethodRequirements(dto);
 
     // Validate CASH payments don't exceed legal limit
-    if (dto.getMethod() == PaymentMethod.CASH) {
+    if (dto.getPaymentMethod() == PaymentMethod.CASH) {
       if (dto.getAmount() > CASH_LEGAL_LIMIT) {
         throw new BusinessRuleViolationException(
             "Cash payment (" + dto.getAmount() + ") exceeds legal limit of " + CASH_LEGAL_LIMIT
@@ -90,7 +90,15 @@ public class PaymentService {
 
     // Create payment entity
     Payment payment = paymentMapper.toEntity(dto, order);
-    payment.setStatus(PaymentStatus.EN_ATTENTE);
+    
+    // For CASH payments, mark as ENCAISSE immediately (immediate payment)
+    // For CHEQUE and TRANSFER, mark as EN_ATTENTE (deferred/pending)
+    if (dto.getPaymentMethod() == PaymentMethod.CASH) {
+      payment.setStatus(PaymentStatus.ENCAISSE);
+    } else {
+      payment.setStatus(PaymentStatus.EN_ATTENTE);
+    }
+    
     payment.setSequenceNumber(generateSequenceNumber(order.getId()));
 
     // Save payment
@@ -98,6 +106,10 @@ public class PaymentService {
 
     // Calculate new remaining amount after this payment
     Double newRemainingAmount = calculateRemainingAmount(order);
+    
+    // Update order's remaining amount
+    order.setRemainingAmount(newRemainingAmount);
+    orderRepository.save(order);
 
     // If fully paid, can be confirmed by ADMIN
     // (Confirmation is done through OrderService.confirmOrder())
@@ -255,7 +267,7 @@ public class PaymentService {
    * @param dto Payment request DTO
    */
   private void validatePaymentMethodRequirements(PaymentRequestDTO dto) {
-    switch (dto.getMethod()) {
+    switch (dto.getPaymentMethod()) {
       case CASH:
         // CASH: receiptNumber is optional
         break;
@@ -282,7 +294,7 @@ public class PaymentService {
         break;
 
       default:
-        throw new BusinessRuleViolationException("Unknown payment method: " + dto.getMethod());
+        throw new BusinessRuleViolationException("Unknown payment method: " + dto.getPaymentMethod());
     }
   }
 

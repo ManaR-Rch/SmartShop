@@ -32,7 +32,8 @@ public class PaymentRequestDTO {
   private Double amount;
 
   @NotNull(message = "Payment method is required")
-  private PaymentMethod method;
+  @JsonProperty("paymentMethod")
+  private PaymentMethod paymentMethod;
 
   // CASH fields
   @JsonProperty("receipt_number")

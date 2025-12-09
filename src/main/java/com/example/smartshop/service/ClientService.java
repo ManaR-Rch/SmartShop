@@ -2,6 +2,7 @@ package com.example.smartshop.service;
 
 import com.example.smartshop.entity.Client;
 import com.example.smartshop.entity.User;
+import com.example.smartshop.entity.UserRole;
 import com.example.smartshop.entity.Order;
 import com.example.smartshop.entity.CustomerTier;
 import com.example.smartshop.dto.ClientDTO;
@@ -9,11 +10,13 @@ import com.example.smartshop.dto.ClientResponseDTO;
 import com.example.smartshop.dto.CreateClientDTO;
 import com.example.smartshop.repository.ClientRepository;
 import com.example.smartshop.repository.OrderRepository;
+import com.example.smartshop.repository.UserRepository;
 import com.example.smartshop.mapper.ClientMapper;
 import com.example.smartshop.exception.BusinessRuleViolationException;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,11 +25,14 @@ public class ClientService {
 
   private final ClientRepository clientRepository;
   private final OrderRepository orderRepository;
+  private final UserRepository userRepository;
   private final ClientMapper clientMapper;
 
-  public ClientService(ClientRepository clientRepository, OrderRepository orderRepository, ClientMapper clientMapper) {
+  public ClientService(ClientRepository clientRepository, OrderRepository orderRepository,
+      UserRepository userRepository, ClientMapper clientMapper) {
     this.clientRepository = clientRepository;
     this.orderRepository = orderRepository;
+    this.userRepository = userRepository;
     this.clientMapper = clientMapper;
   }
 
@@ -85,7 +91,7 @@ public class ClientService {
     // Utiliser les statistiques persistées
     int totalOrders = client.getTotalOrders();
     Double totalSpent = client.getTotalSpent();
-    
+
     if (totalSpent == null) {
       totalSpent = 0.0;
     }
@@ -100,10 +106,11 @@ public class ClientService {
   }
 
   /**
-   * Détermine le tier client basé sur le nombre de commandes et le montant total dépensé.
+   * Détermine le tier client basé sur le nombre de commandes et le montant total
+   * dépensé.
    *
    * @param totalOrders nombre de commandes complétées
-   * @param totalSpent montant total dépensé en DH
+   * @param totalSpent  montant total dépensé en DH
    * @return le tier client déterminé
    */
   private CustomerTier calculateTier(int totalOrders, Double totalSpent) {
@@ -111,17 +118,17 @@ public class ClientService {
     if (totalOrders >= 20 || totalSpent >= 15000.0) {
       return CustomerTier.PLATINUM;
     }
-    
+
     // GOLD : À partir de 10 commandes OU 5 000 DH cumulés
     if (totalOrders >= 10 || totalSpent >= 5000.0) {
       return CustomerTier.GOLD;
     }
-    
+
     // SILVER : À partir de 3 commandes OU 1 000 DH cumulés
     if (totalOrders >= 3 || totalSpent >= 1000.0) {
       return CustomerTier.SILVER;
     }
-    
+
     // Par défaut BASIC
     return CustomerTier.BASIC;
   }
@@ -140,7 +147,18 @@ public class ClientService {
       throw new BusinessRuleViolationException("A client with this email already exists");
     }
 
+    // Créer un User automatiquement pour le client
+    String username = dto.getEmail().split("@")[0]; // Utiliser la partie avant @ comme username
+    User user = User.builder()
+        .username(username)
+        .password(Base64.getEncoder().encodeToString("client123".getBytes())) // Mot de passe par défaut encodé
+        .role(UserRole.CLIENT)
+        .build();
+    User savedUser = userRepository.save(user);
+
+    // Créer le client avec le User associé
     Client client = clientMapper.toEntity(dto);
+    client.setUser(savedUser);
     Client savedClient = clientRepository.save(client);
     return clientMapper.toDTO(savedClient);
   }
