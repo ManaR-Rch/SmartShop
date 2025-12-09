@@ -226,8 +226,23 @@ public class OrderService {
     // Sauvegarder l'ordre
     order = orderRepository.save(order);
 
-    // Mettre à jour le tier du client et ses statistiques
+    // Mettre à jour les statistiques du client
     Client client = order.getClient();
+    
+    // Incrémenter totalOrders
+    client.setTotalOrders(client.getTotalOrders() + 1);
+    
+    // Ajouter le montant total à totalSpent (avec rounding)
+    Double newTotalSpent = roundToTwoDecimals(client.getTotalSpent() + order.getTotal());
+    client.setTotalSpent(newTotalSpent);
+    
+    // Mettre à jour les dates
+    if (client.getFirstOrderDate() == null) {
+      client.setFirstOrderDate(order.getCreatedAt());
+    }
+    client.setLastOrderDate(order.getCreatedAt());
+    
+    // Mettre à jour le tier basé sur les nouvelles statistiques
     clientService.calculateAndUpdateTier(client);
 
     return orderMapper.toResponseDTO(order);

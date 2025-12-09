@@ -76,21 +76,20 @@ public class ClientService {
    * - GOLD : À partir de 10 commandes OU 5 000 DH cumulés
    * - PLATINUM : À partir de 20 commandes OU 15 000 DH cumulés
    *
+   * Utilise les statistiques persistées du client (totalOrders, totalSpent)
+   * au lieu de recalculer depuis la base de données.
+   *
    * @param client le client à mettre à jour
    */
   public void calculateAndUpdateTier(Client client) {
-    // Récupérer les commandes du client
-    List<Order> orders = orderRepository.findByClientId(client.getId());
+    // Utiliser les statistiques persistées
+    int totalOrders = client.getTotalOrders();
+    Double totalSpent = client.getTotalSpent();
     
-    int totalOrders = orders.size();
-    Double totalSpent = orders.stream()
-        .mapToDouble(Order::getTotal)
-        .sum();
+    if (totalSpent == null) {
+      totalSpent = 0.0;
+    }
     totalSpent = roundToTwoDecimals(totalSpent);
-
-    // Mettre à jour les statistiques
-    client.setTotalOrders(totalOrders);
-    client.setTotalSpent(totalSpent);
 
     // Déterminer le nouveau tier
     CustomerTier newTier = calculateTier(totalOrders, totalSpent);

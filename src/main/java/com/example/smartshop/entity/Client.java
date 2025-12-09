@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "clients")
@@ -52,4 +53,10 @@ public class Client {
   @Column(name = "total_spent", nullable = false)
   @Builder.Default
   private Double totalSpent = 0.0;
+
+  @Column(name = "first_order_date")
+  private LocalDateTime firstOrderDate;
+
+  @Column(name = "last_order_date")
+  private LocalDateTime lastOrderDate;
 }

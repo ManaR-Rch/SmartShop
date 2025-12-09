@@ -12,8 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,6 +20,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * Tests pour valider les scénarios d'acceptation du système de fidélité (tier promotion).
+ * 
+ * Les statistiques (totalOrders, totalSpent) sont maintenant persistées directement
+ * dans l'entité Client lors de chaque confirmation de commande via OrderService.confirmOrder().
  * 
  * Règles d'acquisition du niveau (OBTENTION) :
  * - BASIC : Client par défaut (0 commande)
@@ -44,12 +45,8 @@ class TierPromotionTest {
     /**
      * Scénario 1: Client BASIC → 3 commandes → devient SILVER
      * 
-     * Étapes:
-     * 1. Créer un client avec tier BASIC (0 commandes, 0 DH dépensé)
-     * 2. Ajouter 3 commandes de 500 DH chacune (total 1500 DH)
-     * 3. Appeler calculateAndUpdateTier()
-     * 4. Vérifier que le tier est devenu SILVER
-     * 5. Vérifier que totalOrders = 3 et totalSpent = 1500.0
+     * Les stats sont déjà persistées en base (mises à jour par OrderService.confirmOrder)
+     * Vérifier que calculateAndUpdateTier() utilise les stats persistées et les convertit en tier.
      */
     @Test
     void testScenario1_BasicToSilverWith3Orders() {
@@ -59,40 +56,26 @@ class TierPromotionTest {
         client.setName("Test Client");
         client.setEmail("test@example.com");
         client.setTier(CustomerTier.BASIC);
-        client.setTotalOrders(0);
-        client.setTotalSpent(0.0);
+        client.setTotalOrders(3);        // Stats persistées par OrderService
+        client.setTotalSpent(1500.0);    // Stats persistées par OrderService
 
-        List<Order> orders = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            Order order = new Order();
-            order.setId((long) (i + 1));
-            order.setClient(client);
-            order.setTotal(500.0);
-            order.setStatus(OrderStatus.CONFIRMED);
-            orders.add(order);
-        }
-
-        when(orderRepository.findByClientId(1L)).thenReturn(orders);
         when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         clientService.calculateAndUpdateTier(client);
 
         // Assert
-        assertEquals(CustomerTier.SILVER, client.getTier(), "Client should be promoted to SILVER tier");
-        assertEquals(3, client.getTotalOrders(), "Total orders should be 3");
-        assertEquals(1500.0, client.getTotalSpent(), "Total spent should be 1500.0");
+        assertEquals(CustomerTier.SILVER, client.getTier(), "Client should be promoted to SILVER tier (3 commandes)");
+        assertEquals(3, client.getTotalOrders(), "Total orders should remain 3");
+        assertEquals(1500.0, client.getTotalSpent(), "Total spent should remain 1500.0");
     }
 
     /**
      * Scénario 2: Client SILVER → dépense 5000 DH → devient GOLD
      * 
-     * Étapes:
-     * 1. Créer un client avec tier SILVER (3 commandes, 1500 DH dépensé)
-     * 2. Ajouter une commande de 5000 DH
-     * 3. Appeler calculateAndUpdateTier()
-     * 4. Vérifier que le tier est devenu GOLD
-     * 5. Vérifier que totalOrders = 4 et totalSpent = 6500.0
+     * Le client SILVER a déjà 3 commandes (1500 DH).
+     * Après une 4ème commande de 5000 DH, il atteint 6500 DH total.
+     * Comme 6500 >= 5000, le tier passe à GOLD.
      */
     @Test
     void testScenario2_SilverToGoldWith5000Spent() {
@@ -102,50 +85,30 @@ class TierPromotionTest {
         client.setName("Silver Client");
         client.setEmail("silver@example.com");
         client.setTier(CustomerTier.SILVER);
-        client.setTotalOrders(3);
-        client.setTotalSpent(1500.0);
+        client.setTotalOrders(4);        // 3 anciennes + 1 nouvelle commande
+        client.setTotalSpent(6500.0);    // 1500 + 5000
 
-        List<Order> orders = new ArrayList<>();
-        // 3 commandes existantes de 500 DH chacune
-        for (int i = 0; i < 3; i++) {
-            Order order = new Order();
-            order.setId((long) (i + 1));
-            order.setClient(client);
-            order.setTotal(500.0);
-            order.setStatus(OrderStatus.CONFIRMED);
-            orders.add(order);
-        }
-        // Nouvelle commande de 5000 DH
-        Order newOrder = new Order();
-        newOrder.setId(4L);
-        newOrder.setClient(client);
-        newOrder.setTotal(5000.0);
-        newOrder.setStatus(OrderStatus.CONFIRMED);
-        orders.add(newOrder);
-
-        when(orderRepository.findByClientId(2L)).thenReturn(orders);
         when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         clientService.calculateAndUpdateTier(client);
 
         // Assert
-        assertEquals(CustomerTier.GOLD, client.getTier(), "Client should be promoted to GOLD tier");
-        assertEquals(4, client.getTotalOrders(), "Total orders should be 4");
-        assertEquals(6500.0, client.getTotalSpent(), "Total spent should be 6500.0");
+        assertEquals(CustomerTier.GOLD, client.getTier(), "Client should be promoted to GOLD tier (6500 DH >= 5000)");
+        assertEquals(4, client.getTotalOrders());
+        assertEquals(6500.0, client.getTotalSpent());
     }
 
     /**
      * Scénario 3: Client GOLD → passe commande de 1000 DH → remise de 10%
      * 
-     * Étapes:
-     * 1. Créer un client GOLD avec 10 commandes, 5000 DH dépensé
-     * 2. Vérifier que le tier GOLD applique 10% de remise sur subtotal >= 800 DH
-     * 3. Commande de 1000 DH → remise 10% → montant réduit à 900 DH
-     * 4. Après TVA 20% : 900 * 1.2 = 1080 DH
-     * 
-     * Note: Ce scénario valide que la remise GOLD (10%) s'applique correctement
-     * quand le client passe une nouvelle commande.
+     * Valide que la logique de remise est correcte pour un client GOLD.
+     * Pour une commande de 1000 DH avec tier GOLD (10% si >= 800) :
+     * - Subtotal: 1000 DH
+     * - Remise GOLD 10%: 100 DH
+     * - Montant après remise: 900 DH
+     * - TVA 20%: 180 DH
+     * - Total TTC: 1080 DH
      */
     @Test
     void testScenario3_GoldClientReceives10PercentDiscount() {
@@ -158,30 +121,28 @@ class TierPromotionTest {
         client.setTotalOrders(10);
         client.setTotalSpent(5000.0);
 
-        // Vérifier que le client GOLD reçoit bien 10% de remise sur une commande >= 800 DH
-        // Pour une commande de 1000 DH :
-        // - Subtotal: 1000 DH
-        // - Remise GOLD 10% (subtotal >= 800): 100 DH
-        // - Montant après remise: 900 DH
-        // - TVA 20%: 180 DH
-        // - Total: 1080 DH
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Double subtotal = 1000.0;
-        Double expectedDiscount = 100.0; // 10% de 1000
-        Double discountedAmount = subtotal - expectedDiscount; // 900
-        Double tax = discountedAmount * 0.20; // 180
-        Double expectedTotal = discountedAmount + tax; // 1080
+        // Act
+        clientService.calculateAndUpdateTier(client);
 
         // Assert
         assertEquals(CustomerTier.GOLD, client.getTier());
-        assertEquals(100.0, expectedDiscount, "GOLD tier should apply 10% discount");
-        assertEquals(1080.0, expectedTotal, "Total with TAX should be 1080");
+        
+        // Vérifier la logique de remise GOLD sur 1000 DH
+        Double subtotal = 1000.0;
+        Double expectedDiscount = 100.0; // 10% pour GOLD tier
+        Double discountedAmount = subtotal - expectedDiscount; // 900
+        Double tax = discountedAmount * 0.20; // 180
+        Double expectedTotal = discountedAmount + tax; // 1080
+        
+        assertEquals(100.0, expectedDiscount);
+        assertEquals(1080.0, expectedTotal);
     }
 
     /**
      * Test supplémentaire: Vérifier que le tier PLATINUM s'applique correctement
-     * 
-     * Client avec 20 commandes ou 15000 DH dépensés → PLATINUM
+     * avec 20 commandes ou 15000 DH dépensés
      */
     @Test
     void testPlatinumTierWith20Orders() {
@@ -191,20 +152,9 @@ class TierPromotionTest {
         client.setName("Platinum Client");
         client.setEmail("platinum@example.com");
         client.setTier(CustomerTier.BASIC);
-        client.setTotalOrders(0);
-        client.setTotalSpent(0.0);
+        client.setTotalOrders(20);
+        client.setTotalSpent(20000.0);
 
-        List<Order> orders = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            Order order = new Order();
-            order.setId((long) (i + 1));
-            order.setClient(client);
-            order.setTotal(1000.0);
-            order.setStatus(OrderStatus.CONFIRMED);
-            orders.add(order);
-        }
-
-        when(orderRepository.findByClientId(4L)).thenReturn(orders);
         when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
@@ -217,9 +167,8 @@ class TierPromotionTest {
     }
 
     /**
-     * Test supplémentaire: Vérifier que le tier PLATINUM s'applique avec 15000 DH
-     * 
-     * Client avec moins de 20 commandes mais 15000+ DH dépensés → PLATINUM
+     * Test supplémentaire: Vérifier que le tier PLATINUM s'applique avec 15000+ DH
+     * même avec moins de 20 commandes
      */
     @Test
     void testPlatinumTierWith15000DhSpent() {
@@ -229,21 +178,9 @@ class TierPromotionTest {
         client.setName("Big Spender");
         client.setEmail("bigspender@example.com");
         client.setTier(CustomerTier.BASIC);
-        client.setTotalOrders(0);
-        client.setTotalSpent(0.0);
+        client.setTotalOrders(5);        // < 20
+        client.setTotalSpent(15000.0);   // >= 15000
 
-        List<Order> orders = new ArrayList<>();
-        // 5 commandes de 3000 DH chacune = 15000 DH total
-        for (int i = 0; i < 5; i++) {
-            Order order = new Order();
-            order.setId((long) (i + 1));
-            order.setClient(client);
-            order.setTotal(3000.0);
-            order.setStatus(OrderStatus.CONFIRMED);
-            orders.add(order);
-        }
-
-        when(orderRepository.findByClientId(5L)).thenReturn(orders);
         when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
@@ -257,7 +194,6 @@ class TierPromotionTest {
 
     /**
      * Test supplémentaire: Vérifier la limite minimale de SILVER
-     * 
      * Client avec 2 commandes (< 3) et 500 DH (< 1000) → reste BASIC
      */
     @Test
@@ -268,20 +204,9 @@ class TierPromotionTest {
         client.setName("Minimal Client");
         client.setEmail("minimal@example.com");
         client.setTier(CustomerTier.BASIC);
-        client.setTotalOrders(0);
-        client.setTotalSpent(0.0);
+        client.setTotalOrders(2);
+        client.setTotalSpent(500.0);
 
-        List<Order> orders = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
-            Order order = new Order();
-            order.setId((long) (i + 1));
-            order.setClient(client);
-            order.setTotal(250.0);
-            order.setStatus(OrderStatus.CONFIRMED);
-            orders.add(order);
-        }
-
-        when(orderRepository.findByClientId(6L)).thenReturn(orders);
         when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
@@ -291,5 +216,79 @@ class TierPromotionTest {
         assertEquals(CustomerTier.BASIC, client.getTier(), "Client should remain BASIC");
         assertEquals(2, client.getTotalOrders());
         assertEquals(500.0, client.getTotalSpent());
+    }
+
+    /**
+     * Test supplémentaire: GOLD tier avec 10 commandes exactement
+     */
+    @Test
+    void testGoldTierWith10Orders() {
+        // Arrange
+        Client client = new Client();
+        client.setId(7L);
+        client.setName("Gold Client 10");
+        client.setEmail("gold10@example.com");
+        client.setTier(CustomerTier.BASIC);
+        client.setTotalOrders(10);      // >= 10
+        client.setTotalSpent(2500.0);   // < 5000
+
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        clientService.calculateAndUpdateTier(client);
+
+        // Assert
+        assertEquals(CustomerTier.GOLD, client.getTier(), "Client with 10 orders should reach GOLD");
+        assertEquals(10, client.getTotalOrders());
+        assertEquals(2500.0, client.getTotalSpent());
+    }
+
+    /**
+     * Test supplémentaire: SILVER tier avec 1000 DH exactement (limite)
+     */
+    @Test
+    void testSilverTierWith1000DhExact() {
+        // Arrange
+        Client client = new Client();
+        client.setId(8L);
+        client.setName("Silver Spender");
+        client.setEmail("silver1000@example.com");
+        client.setTier(CustomerTier.BASIC);
+        client.setTotalOrders(1);       // < 3
+        client.setTotalSpent(1000.0);   // >= 1000 (limite minimale SILVER)
+
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        clientService.calculateAndUpdateTier(client);
+
+        // Assert
+        assertEquals(CustomerTier.SILVER, client.getTier(), "Client with 1000 DH should reach SILVER");
+        assertEquals(1, client.getTotalOrders());
+        assertEquals(1000.0, client.getTotalSpent());
+    }
+
+    /**
+     * Test supplémentaire: Rounding des montants (important pour BigDecimal)
+     * Client avec un total qui nécessite arrondi : 1000.004 → 1000.00
+     */
+    @Test
+    void testRoundingWith1000Dot004() {
+        // Arrange
+        Client client = new Client();
+        client.setId(9L);
+        client.setName("Rounding Client");
+        client.setEmail("rounding@example.com");
+        client.setTier(CustomerTier.BASIC);
+        client.setTotalOrders(3);
+        client.setTotalSpent(1000.004);  // Doit être arrondi à 1000.00
+
+        when(clientRepository.save(any(Client.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        clientService.calculateAndUpdateTier(client);
+
+        // Assert
+        assertEquals(CustomerTier.SILVER, client.getTier(), "Client should be SILVER (rounded to 1000.00)");
     }
 }
