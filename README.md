@@ -618,8 +618,8 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 ## 👨‍💻 Auteur
 
 **Votre Nom**
-- GitHub: [@votre-username](https://github.com/ManaR-Rch)
-- LinkedIn: [Votre Profil](https://linkedin.com/in/manar-marchoube-a955a9337)
+- GitHub: [@Manar-MARCHOUBE](https://github.com/ManaR-Rch)
+- LinkedIn: [Manar MARCHOUBE](https://linkedin.com/in/manar-marchoube-a955a9337)
 - Email: manarmarchou6@gmail.com
 
 ## 🙏 Remerciements
