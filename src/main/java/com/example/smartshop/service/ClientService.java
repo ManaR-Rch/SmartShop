@@ -200,4 +200,6 @@ public class ClientService {
     return clientRepository.findById(id)
         .orElseThrow(() -> new BusinessRuleViolationException("Client not found"));
   }
+
+
 }

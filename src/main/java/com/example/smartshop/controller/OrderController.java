@@ -67,17 +67,17 @@ public class OrderController {
   public ResponseEntity<Map<String, Object>> confirmOrder(
       @PathVariable Long id,
       @Valid @RequestBody(required = false) PaymentRequestDTO paymentDto) {
-    
+
     // If payment is provided, create it first
     PaymentResponseDTO payment = null;
     if (paymentDto != null) {
       paymentDto.setOrderId(id);
       payment = paymentService.addPayment(paymentDto);
     }
-    
+
     // Then confirm the order
     OrderResponseDTO order = orderService.confirmOrder(id);
-    
+
     Map<String, Object> response = new HashMap<>();
     response.put("message", "Order confirmed successfully");
     response.put("order", order);
@@ -96,4 +96,5 @@ public class OrderController {
     response.put("order", order);
     return ResponseEntity.ok(response);
   }
+ 
 }

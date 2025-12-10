@@ -82,10 +82,10 @@ public class OrderService {
       }
     }
 
-    // Création de la commande
+    //  la commande
     Order order = orderMapper.toEntity(dto, client);
 
-    // Création des items
+    //  items
     List<OrderItem> orderItems = new java.util.ArrayList<>();
     for (OrderItemRequestDTO itemDTO : dto.getItems()) {
       Product product = products.stream()
@@ -93,7 +93,7 @@ public class OrderService {
           .findFirst()
           .orElseThrow();
 
-      // Utiliser unitPrice de la requête si fourni, sinon utiliser le prix du produit
+      //  unitPrice de la requête si fourni sinon use le prix du produit
       Double unitPrice = itemDTO.getUnitPrice() != null ? itemDTO.getUnitPrice() : product.getPrice();
 
       OrderItem item = OrderItem.builder()
@@ -108,7 +108,7 @@ public class OrderService {
 
     order.setItems(orderItems);
 
-    // Si stock insuffisant, marquer comme REJECTED
+    // Si stock insuffisant REJECTED
     if (insufficientStock) {
       order.setStatus(OrderStatus.REJECTED);
       order.setSubtotal(0.0);
@@ -125,7 +125,6 @@ public class OrderService {
         .sum();
     order.setSubtotal(roundToTwoDecimals(subTotal));
 
-    // ===== LOGIQUE DE REMISE =====
     Double totalDiscountPercentage = 0.0;
 
     // Remise basée sur le tier
@@ -137,7 +136,7 @@ public class OrderService {
       totalDiscountPercentage += 5.0;
     }
 
-    // Code promo : +5% supplémentaire (validation format)
+    // Code promo 
     if (dto.getPromoCode() != null && !dto.getPromoCode().isEmpty()) {
       if (!isValidPromoCode(dto.getPromoCode())) {
         throw new BusinessRuleViolationException("Invalid promo code format. Expected PROMO-XXXX");
@@ -225,34 +224,26 @@ public class OrderService {
       throw new BusinessRuleViolationException("Only PENDING orders can be confirmed");
     }
 
-    // Mettre à jour le statut
     order.setStatus(OrderStatus.CONFIRMED);
 
-    // Décrémenter les stocks
     for (OrderItem item : order.getItems()) {
       productService.decrementStock(item.getProduct().getId(), item.getQuantity());
     }
 
-    // Sauvegarder l'ordre
     order = orderRepository.save(order);
 
-    // Mettre à jour les statistiques du client
     Client client = order.getClient();
 
-    // Incrémenter totalOrders
     client.setTotalOrders(client.getTotalOrders() + 1);
 
-    // Ajouter le montant total à totalSpent (avec rounding)
     Double newTotalSpent = roundToTwoDecimals(client.getTotalSpent() + order.getTotal());
     client.setTotalSpent(newTotalSpent);
 
-    // Mettre à jour les dates
     if (client.getFirstOrderDate() == null) {
       client.setFirstOrderDate(order.getCreatedAt());
     }
     client.setLastOrderDate(order.getCreatedAt());
 
-    // Mettre à jour le tier basé sur les nouvelles statistiques
     clientService.calculateAndUpdateTier(client);
 
     return orderMapper.toResponseDTO(order);
@@ -262,7 +253,7 @@ public class OrderService {
     Order order = orderRepository.findById(id)
         .orElseThrow(() -> new BusinessRuleViolationException("Order not found"));
 
-    // Seules les commandes PENDING peuvent être annulées
+    
     if (order.getStatus() != OrderStatus.PENDING) {
       throw new BusinessRuleViolationException("Only PENDING orders can be canceled");
     }
@@ -285,7 +276,7 @@ public class OrderService {
           || newStatus == OrderStatus.REJECTED);
     } else if (currentStatus == OrderStatus.CONFIRMED || currentStatus == OrderStatus.CANCELED
         || currentStatus == OrderStatus.REJECTED) {
-      validTransition = false; // États finaux
+      validTransition = false; 
     }
 
     if (!validTransition) {

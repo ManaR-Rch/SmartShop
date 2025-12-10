@@ -58,28 +58,27 @@ public class PaymentService {
    * @return PaymentResponseDTO with updated remaining amount
    */
   public PaymentResponseDTO addPayment(PaymentRequestDTO dto) {
-    // Validate order exists
     Order order = orderRepository.findById(dto.getOrderId())
         .orElseThrow(() -> new BusinessRuleViolationException("Order not found"));
 
-    // Validate order is in PENDING status (not finalized)
+
     if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.REJECTED) {
       throw new BusinessRuleViolationException("Cannot add payment to order with status: " + order.getStatus());
     }
 
-    // Calculate remaining amount before this payment
+  
     Double remainingAmount = calculateRemainingAmount(order);
 
-    // Validate payment amount doesn't exceed remaining
+  
     if (dto.getAmount() > remainingAmount + EPSILON) {
       throw new BusinessRuleViolationException(
           "Payment amount (" + dto.getAmount() + ") exceeds remaining amount (" + remainingAmount + ")");
     }
 
-    // Validate method-specific requirements
+ 
     validatePaymentMethodRequirements(dto);
 
-    // Validate CASH payments don't exceed legal limit
+    //  CASH exceed legal limit
     if (dto.getPaymentMethod() == PaymentMethod.CASH) {
       if (dto.getAmount() > CASH_LEGAL_LIMIT) {
         throw new BusinessRuleViolationException(
@@ -88,31 +87,28 @@ public class PaymentService {
       }
     }
 
-    // Create payment entity
+  
     Payment payment = paymentMapper.toEntity(dto, order);
-    
-    // For CASH payments, mark as ENCAISSE immediately (immediate payment)
-    // For CHEQUE and TRANSFER, mark as EN_ATTENTE (deferred/pending)
+
+  
     if (dto.getPaymentMethod() == PaymentMethod.CASH) {
       payment.setStatus(PaymentStatus.ENCAISSE);
     } else {
       payment.setStatus(PaymentStatus.EN_ATTENTE);
     }
-    
+
     payment.setSequenceNumber(generateSequenceNumber(order.getId()));
 
     // Save payment
     payment = paymentRepository.save(payment);
 
-    // Calculate new remaining amount after this payment
+  
     Double newRemainingAmount = calculateRemainingAmount(order);
-    
-    // Update order's remaining amount
+
+  
     order.setRemainingAmount(newRemainingAmount);
     orderRepository.save(order);
 
-    // If fully paid, can be confirmed by ADMIN
-    // (Confirmation is done through OrderService.confirmOrder())
 
     return paymentMapper.toResponseDTO(payment, newRemainingAmount);
   }
